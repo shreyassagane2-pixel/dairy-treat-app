@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<title>डेअरी ट्रिट — नोंदवही व बिल प्रणाली</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #7d1935; 
+    --primary-dark: #4a0e1f;
+    --accent: #d4af37; 
+    --bg: #f4f5f7; 
+    --card-bg: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --paper: #fffcf5;
+    --hand: #1e3a8a;
+    --today: #fef08a;
+  }
+  
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); font-family: 'Noto Sans Devanagari', sans-serif; color: var(--text-main); -webkit-font-smoothing: antialiased; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+
+  .topbar { 
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+    color: #fff; padding: 10px 14px; display: flex; align-items: center; gap: 12px; 
+    flex-wrap: nowrap; overflow-x: auto; white-space: nowrap;
+    position: sticky; top: 0; z-index: 50; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .topbar::-webkit-scrollbar { display: none; }
+  .topbar .brand { font-size: 18px; font-weight: 700; flex-shrink: 0; }
+  .topbar select { 
+    background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.3); 
+    padding: 6px 10px; border-radius: 6px; font-weight: 600; font-size: 13px; outline: none; flex-shrink: 0;
+  }
+  .topbar select option { color: #000; background: #fff; }
+  #syncStatus { flex-shrink: 0; }
+
+  .tabs { display: flex; gap: 4px; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 8px; flex-shrink: 0; }
+  .topbar button.tabBtn { background: transparent; border: none; color: rgba(255,255,255,0.8); padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .topbar button.tabBtn.active { background: #fff; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+  .page { max-width: 1400px; margin: 0 auto; padding: 12px 8px; }
+  .card { background: var(--card-bg); border-radius: 12px; padding: 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 16px; }
+  .card h2 { font-size: 16px; color: var(--primary); margin-top: 0; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--accent); }
+  .hint { font-size: 12px; color: #0f5132; background: #d1e7dd; border-left: 4px solid #0f5132; padding: 10px; margin-bottom: 14px; font-weight: 500; line-height: 1.4; }
+
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+  .field input, .field select { width: 100%; padding: 8px 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .field input:focus, .field select:focus { outline: none; border-color: var(--primary); background: #fff; }
+  .row2 { display: flex; gap: 10px; flex-wrap: wrap; }
+  .row2 > div { flex: 1; min-width: 140px; }
+
+  button.btn { padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--primary); background: transparent; color: var(--primary); font-weight: 600; font-size: 13px; cursor: pointer; }
+  button.btn.solid { background: var(--primary); color: #fff; }
+  button.btn.danger { border-color: #ef4444; color: #ef4444; }
+  button.btn.small { padding: 4px 8px; font-size: 11px; border-radius: 6px; }
+
+  .monthBar { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; }
+  .monthBar .field { margin-bottom: 0; max-width: 140px; }
+  
+  .gridScroll { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); -webkit-overflow-scrolling: touch; }
+  
+  table.regTable, table.custTable, table.ledgerTable { border-collapse: separate; border-spacing: 0; width: 100%; }
+  table.regTable th, table.regTable td, table.custTable th, table.custTable td, table.ledgerTable th, table.ledgerTable td { 
+    border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); padding: 6px 4px; text-align: center; vertical-align: middle; 
+  }
+  table.regTable th, table.custTable th, table.ledgerTable th { background: #f8fafc; color: var(--text-muted); font-weight: 700; font-size: 11px; }
+  table.regTable th:first-child, table.regTable td:first-child { border-left: 1px solid var(--border); }
+  
+  table.regTable th { position: sticky; top: 0; z-index: 2; }
+  table.regTable td.nameCell, table.regTable th.nameHead { 
+    position: sticky; left: 0; background: #fff; z-index: 3; text-align: left; padding-left: 8px; 
+    min-width: 130px; max-width: 150px; white-space: normal; line-height: 1.3;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.05); border-right: 2px solid var(--border);
+  }
+  table.regTable th.nameHead { z-index: 4; background: #f8fafc; }
+  table.regTable td.nameCell { font-size: 13px; font-weight: 700; color: var(--text-main); }
+  
+  table.regTable td.dayCell input { 
+    width: 38px; height: 30px; padding: 0; text-align: center; border: 1.5px solid #cbd5e1; border-radius: 6px; 
+    font-size: 14px; font-weight: 700; color: #dc2626; background: #fff;
+  }
+  table.regTable td.dayCell input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(125,25,53,0.1); }
+  table.regTable td.dayCell.today { background: var(--today); }
+  
+  table.regTable .nameCell button.btn.small { margin-top: 4px; padding: 3px 6px; font-size: 10px; display: inline-block; }
+  table.regTable .nameCell button.paidYes { background: #dcfce7; border-color: #22c55e; color: #166534; }
+  table.regTable .nameCell button.partialPaid { background: #fef08a; border-color: #ca8a04; color: #854d0e; }
+
+  table.regTable td.prodTypeCell { text-align: left; padding-left: 6px; min-width: 80px; font-weight: 500; font-size: 11px; white-space: normal; line-height: 1.2; }
+  table.regTable .otherMark { font-size: 9px; color: #b45309; font-weight: 700; background: #fef3c7; padding: 2px 4px; border-radius: 4px; display: inline-block; margin-top: 2px; }
+  table.regTable td.totCell { font-weight: 700; color: var(--primary); background: #f8fafc; font-size: 13px; }
+  table.regTable td.amtCell { font-weight: 700; color: var(--primary-dark); font-family: 'Kalam', cursive; font-size: 14px; background: #f8fafc; }
+  
+  .grandTotalBar { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 12px 16px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 10px; font-weight: 600; color: #fff; flex-wrap: wrap; gap: 8px; }
+  .grandTotalBar .val { font-family: 'Kalam', cursive; font-size: 22px; color: #fff; font-weight: 700; }
+
+  table.custTable input.cName { min-width: 140px; font-size: 13.5px; font-weight: 600; padding: 6px; }
+  .seqBtns { display: flex; flex-direction: column; gap: 2px; align-items: center; }
+  .seqBtns button { border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 4px; font-size: 10px; padding: 2px 6px; }
+  .prodLine select.pType { min-width: 90px; padding: 4px; font-size: 12px; }
+  .prodLine input.pRate, .prodLine input.pUsual { width: 50px; padding: 4px; font-size: 12px; text-align: center; }
+
+  /* ---------- Modal & Handwritten Bill ---------- */
+  #billModalOverlay { position: fixed; inset: 0; background: rgba(15,23,42,0.7); backdrop-filter: blur(2px); z-index: 100; display: none; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px 10px; }
+  #billModalBox { background: #fff; border-radius: 16px; max-width: 900px; width: 100%; padding: 16px; position: relative; }
+  .closeX { position: absolute; top: 10px; right: 12px; border: none; background: #f1f5f9; color: #64748b; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; }
+  .modalActions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .modalActions button { flex: 1; min-width: 140px; padding: 10px; font-size: 14px; }
+  
+  #billWrap { display: flex; justify-content: center; overflow-x: auto; padding: 8px; background: #e2e8f0; border-radius: 8px; }
+  #bill { width: 500px; min-width: 500px; background: var(--paper); border: 3px solid var(--primary); border-radius: 8px; padding: 20px; position: relative; }
+  
+  .billHeader { position: relative; text-align: center; padding: 2px 80px 10px; border-bottom: 2px double var(--primary); margin-bottom: 12px; min-height: 90px; font-family: 'Noto Sans Devanagari', sans-serif; }
+  .headerCow { position: absolute; left: 0; top: 0; width: 60px; }
+  .headerCow svg { width: 60px; height: auto; }
+  
+  .shopName { font-size: 26px; font-weight: 700; color: var(--primary-dark); word-wrap: break-word; white-space: normal; line-height: 1.2; }
+  .addr { font-size: 11.5px; color: #475569; margin-top: 6px; white-space: normal; line-height: 1.3; }
+  .headerQr { position: absolute; right: 0; top: 0; width: 70px; text-align: center; }
+  #upiQrBox img, #upiQrBox canvas { width: 64px !important; height: 64px !important; border-radius: 4px; }
+  
+  .custRow { display: flex; flex-wrap: wrap; row-gap: 8px; margin: 16px 0 12px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 10px 14px; font-family: 'Kalam', cursive; font-size: 16px; }
+  .custRow > div { flex: 0 0 50%; }
+  .custRow .lbl { font-family: 'Noto Sans Devanagari', sans-serif; font-size: 12px; color: #555; font-weight: 600; } 
+  .custRow .val { color: var(--hand); font-weight: 700; font-size: 18px; } 
+  
+  table.billTable { width: 100%; border-collapse: collapse; margin-top: 0; table-layout: fixed; border: 1px solid #d8ae8a; }
+  table.billTable th { background: #ffedd5; font-size: 11px; padding: 4px 2px; border: 1px solid #d8ae8a; font-family: 'Noto Sans Devanagari', sans-serif; color: var(--primary-dark); } 
+  table.billTable td { font-family: 'Kalam', cursive; font-size: 16px; text-align: center; padding: 2px; border: 1px solid #d8ae8a; color: #1e293b; font-weight: 500; } 
+  table.billTable td.qty { color: var(--hand); font-weight: 700; font-size: 17px; }
+  
+  .breakdownBox { margin-top: 10px; border-top: 1px dashed #c9a97a; padding-top: 8px; }
+  .breakdownRow { display: flex; justify-content: space-between; padding: 2px; }
+  .breakdownRow .lbl { font-family: 'Noto Sans Devanagari', sans-serif; font-size: 12.5px; color: #333; font-weight: 600; }
+  .breakdownRow .val { font-family: 'Kalam', cursive; color: var(--hand); font-weight: 700; font-size: 17px; }
+  
+  .amountBox { margin-top: 12px; background: #ffedd5; border: 2px dashed var(--primary); border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .amountBox .lbl { font-family: 'Noto Sans Devanagari', sans-serif; font-weight: 700; color: var(--primary-dark); font-size: 14px; line-height: 1.3; }
+  .amountBox .val { font-family: 'Kalam', cursive; font-size: 28px; color: var(--primary); font-weight: 700; }
+  
+  .noteRow { display: flex; justify-content: space-between; margin-top: 12px; font-size: 10px; color: #555; font-family: 'Noto Sans Devanagari', sans-serif; }
+  .thanksLine { text-align: center; margin-top: 8px; font-family: 'Kalam', cursive; color: var(--primary); font-size: 16px; font-weight: 700; }
+  
+  .signRow { display: flex; justify-content: space-between; margin-top: 20px; font-size: 11px; color: #444; font-family: 'Noto Sans Devanagari', sans-serif; }
+  .signRow div { width: 40%; border-top: 1px solid #999; text-align: center; padding-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" id="topbarBrand">🐄 डेअरी ट्रिट</div>
+  <select id="globalRouteFilter">
+    <option value="all">📍 सर्व मार्ग (All)</option>
+    <option value="sai_nagar">📍 साई नगर</option>
+    <option value="gopal_nagar">📍 गोपाळ नगर</option>
+    <option value="prasad_nagar">📍 प्रसाद नगर</option>
+  </select>
+  <div id="syncStatus">🔄 जोडत आहे...</div>
+  <div class="tabs">
+    <button class="tabBtn active" data-tab="register">📋 नोंदवही</button>
+    <button class="tabBtn" data-tab="customers">👥 ग्राहक</button>
+    <button class="tabBtn" data-tab="ledger">📒 खातेवही</button>
+    <button class="tabBtn" data-tab="payments">💰 जमा नोंदी</button>
+    <button class="tabBtn" data-tab="settings">⚙️ सेटिंग्ज</button>
+  </div>
+</div>
+
+<div class="page">
+  <!-- Register Tab -->
+  <div class="tabContent" id="tab-register">
+    <div class="card">
+      <h2>दैनंदिन पुरवठा नोंदवही</h2>
+      <div class="hint">वर असलेल्या ड्रॉपडाऊनमधून मार्ग निवडल्यास फक्त त्याच मार्गाचे ग्राहक दिसतील. प्रत्येक ग्राहकाची रांग "ग्राहक" टॅबमध्ये ठरवा.</div>
+      <div class="monthBar">
+        <div class="field"><label>महिना</label><select id="regMonth"></select></div>
+        <div class="field"><label>वर्ष</label><select id="regYear"></select></div>
+        <button class="btn solid" id="quickFillBtn">✅ आजची नोंद पटकन भरा</button>
+        <button class="btn" id="fillMonthBtn" title="रिकाम्या तारखा नेहमीच्या मात्रेने भरा">📆 संपूर्ण महिना भरा</button>
+        <button class="btn" id="allBillsPdfBtn">🖨️ PDF डाउनलोड करा (सर्व बिले)</button>
+      </div>
+      <div class="gridScroll"><table class="regTable" id="regTable"></table></div>
+      <datalist id="qtyDatalist">
+        <option value="0.25">250 मिली</option><option value="0.5">500 मिली</option><option value="0.75">750 मिली</option>
+        <option value="1">1 लि.</option><option value="1.25">1.25 लि.</option><option value="1.5">1.5 लि.</option>
+        <option value="1.75">1.75 लि.</option><option value="2">2 लि.</option><option value="2.5">2.5 लि.</option><option value="3">3 लि.</option>
+      </datalist>
+      <div class="grandTotalBar"><div>एकूण विक्री रक्कम:</div><div class="val">₹ <span id="regGrandTotal">0</span></div></div>
+    </div>
+  </div>
+
+  <!-- Customers Tab -->
+  <div class="tabContent" id="tab-customers" style="display:none;">
+    <div class="card">
+      <h2>ग्राहक व्यवस्थापन (रांग / क्रम इथून ठरवा)</h2>
+      <div class="gridScroll">
+        <table class="custTable">
+          <thead><tr><th>क्रम</th><th>नांव</th><th>मार्ग (Route)</th><th>मोबाईल</th><th colspan="3">उत्पादन प्रकार, दर ₹/लि., नेहमीची मात्रा</th><th></th></tr></thead>
+          <tbody id="custBody"></tbody>
+        </table>
+      </div>
+      <h2 style="margin-top:24px;">नवीन ग्राहक जोडा</h2>
+      <div class="row2">
+        <div class="field"><label>नांव</label><input id="newCustName" placeholder="उदा. रमेश पाटील"></div>
+        <div class="field"><label>मार्ग (Route)</label><select id="newCustRoute"><option value="sai_nagar">साई नगर</option><option value="gopal_nagar">गोपाळ नगर</option><option value="prasad_nagar">प्रसाद नगर</option></select></div>
+        <div class="field"><label>मोबाईल नं.</label><input id="newCustPhone" placeholder="मोबाईल नं."></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>उत्पादन</label><select id="newCustProduct"><option value="gir">गीर गायीचे दुध</option><option value="sadhe">साधे दुध</option><option value="mhashi">म्हशीचे दुध</option><option value="other">इतर</option></select></div>
+        <div class="field" id="newCustOtherNameWrap" style="display:none;"><label>इतर उत्पादनाचे नांव</label><input id="newCustOtherName" placeholder="उदा. दही"></div>
+        <div class="field"><label>दर ₹/लि.</label><input type="number" id="newCustRate" value="65"></div>
+        <div class="field"><label>नेहमीची मात्रा</label><input type="number" id="newCustUsualQty" value="1" step="0.25"></div>
+      </div>
+      <button class="btn solid" id="addCustBtn">+ ग्राहक जोडा</button>
+    </div>
+  </div>
+
+  <!-- Ledger Tab -->
+  <div class="tabContent" id="tab-ledger" style="display:none;">
+    <div class="card">
+      <h2>📒 ग्राहक खातेवही (उधारी / जमा / इतर वस्तू)</h2>
+      <div class="hint">दैनंदिन दुधाची नोंद "नोंदवही" टॅबमध्ये होते. इथे अतिरिक्त वस्तू, मागील शिल्लक, किंवा मिळालेले पैसे नोंदवा.</div>
+      <div class="field"><label>ग्राहक निवडा (फिल्टर केलेल्या मार्गाचे)</label><select id="ledgerCustSel"><option value="">-- ग्राहक निवडा --</option></select></div>
+      <div id="ledgerDetail" style="display:none; margin-top:12px;">
+        <div class="ledgerHead" style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:8px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+          <div><strong id="ledgerCustNameShow"></strong> — <span id="ledgerCustPhoneShow"></span></div>
+          <div>सध्याची शिल्लक: <span id="ledgerBalance" style="font-weight:700; color: var(--primary);"></span></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>दिनांक</label><input type="date" id="entryDate"></div>
+          <div class="field"><label>प्रकार</label><select id="entryType"><option value="debit">विक्री / उधारी (नावे)</option><option value="credit">पैसे मिळाले (जमा)</option></select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>तपशील</label><input id="entryNote" placeholder="उदा. १ किलो तूप"></div>
+          <div class="field"><label>रक्कम ₹</label><input type="number" id="entryAmount" placeholder="0"></div>
+        </div>
+        <button class="btn solid" id="addEntryBtn">➕ नोंद जोडा</button>
+        <div class="gridScroll" style="margin-top:16px;">
+          <table class="ledgerTable">
+            <thead><tr><th>दिनांक</th><th>तपशील</th><th>जमा ₹</th><th>नावे ₹</th><th>शिल्लक ₹</th><th></th></tr></thead>
+            <tbody id="ledgerBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payments Tab -->
+  <div class="tabContent" id="tab-payments" style="display:none;">
+    <div class="card">
+      <h2>💰 ग्राहकांकडून मिळालेली रक्कम</h2>
+      <div class="row2">
+        <div class="field"><label>महिना फिल्टर</label><select id="paymentsMonthFilter"><option value="">-- सर्व --</option></select></div>
+        <div class="field"><label>ग्राहक फिल्टर</label><select id="paymentsCustFilter"><option value="">-- सर्व ग्राहक --</option></select></div>
+      </div>
+      <div class="gridScroll">
+        <table class="ledgerTable" id="paymentsTable">
+          <thead><tr><th>दिनांक</th><th>वेळ</th><th>ग्राहक</th><th>तपशील</th><th>रक्कम ₹</th></tr></thead>
+          <tbody id="paymentsBody"></tbody>
+        </table>
+      </div>
+      <div class="grandTotalBar" style="margin-top:12px; padding:10px 14px;">
+        <div>एकूण जमा रक्कम:</div><div class="val">₹ <span id="paymentsGrandTotal">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div class="tabContent" id="tab-settings" style="display:none;">
+    <div class="card">
+      <h2>दुकान माहिती</h2>
+      <div class="field"><label>दुकानाचे नांव</label><input id="shopName" value="डेअरी ट्रिट"></div>
+      <div class="field"><label>पत्ता</label><input id="shopAddr" value="बेनाम चौक, महाराष्ट्र बँकेच्या जवळ, साई नगर, अमरावती"></div>
+      <div class="row2">
+        <div class="field"><label>संपर्क मो. नं.</label><input id="shopPhone" value="9405437523"></div>
+        <div class="field"><label>प्रोप्रा. (मालक)</label><input id="ownerName" value="शशांक प्र. कठाळे"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>फोन पे नं.</label><input id="phonePay" value="9075115742"></div>
+        <div class="field"><label>कॉलिंग नं.</label><input id="callingNo" value="9307476174"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>UPI आयडी (VPA)</label><input id="upiVpa" value="Q111876508@ybl"></div>
+        <div class="field"><label>UPI पेयी नाव</label><input id="upiPayeeName" value="Dairy Treat"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>बॅकअप</h2>
+      <div class="row2">
+        <button class="btn" id="exportBackupBtn">⬇️ संपूर्ण बॅकअप डाउनलोड करा</button>
+        <button class="btn" id="importBackupBtn">⬆️ बॅकअप पुन्हा लोड करा</button>
+      </div>
+      <input type="file" id="importFileInput" accept=".json" style="display:none;">
+      <button class="btn danger" id="resetAllBtn" style="margin-top:16px;">🗑 संपूर्ण डेटा मिटवा (सावधान)</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Other Item Modal -->
+<div id="addOtherModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(2px); z-index:110; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:12px; padding:20px; max-width:340px; width:100%; position:relative;">
+    <button class="closeX" id="addOtherCloseBtn" style="position:absolute; top:8px; right:10px; border:none; background:none; font-size:18px;">✕</button>
+    <h3 style="margin-top:0; color:var(--primary);">🧾 इतर वस्तू जोडा</h3>
+    <div class="hint" id="addOtherCustLabel" style="margin-bottom:12px; font-size:11px;"></div>
+    <div class="field"><label>दिनांक</label><input type="date" id="addOtherDate"></div>
+    <div class="field" style="margin-top:10px;"><label>वस्तूचे नांव (उदा. तूप, पनीर)</label><input type="text" id="addOtherNote" placeholder="उदा. तूप"></div>
+    <div class="field" style="margin-top:10px;"><label>रक्कम ₹</label><input type="number" min="0" step="1" id="addOtherAmount" placeholder="उदा. 500"></div>
+    <div class="modalActions" style="margin-top:16px;">
+      <button class="btn solid" id="addOtherSaveBtn">✅ जतन करा</button>
+      <button class="btn" id="addOtherCancelBtn">रद्द करा</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bill Modal -->
+<div id="billModalOverlay">
+  <div id="billModalBox">
+    <button class="closeX" id="closeModalBtn">✕</button>
+    <div class="modalExtra">
+      <div class="row2">
+        <div class="field"><label>मागील महिन्याची शिल्लक (₹)</label><input type="number" id="modalPrevBal" readonly style="background:#f1f5f9; cursor:not-allowed;"></div>
+        <div class="field"><label>या महिन्यातील इतर वस्तू (₹)</label><input type="number" id="modalOtherTotal" readonly style="background:#f1f5f9; cursor:not-allowed;"></div>
+      </div>
+    </div>
+    <div class="modalExtra" style="background:#fff7ed; border-color:#fed7aa;">
+      <div class="hint" style="margin-bottom:10px; padding:8px; font-size:11px; background:#ffedd5; border-color:#f97316; color:#9a3412;">ऐच्छिक: अ‍ॅपमध्ये नोंद नसलेली आगाऊ भरणा (advance) किंवा थकबाकी असल्यास इथे रक्कम टाका.</div>
+      <div class="row2">
+        <div class="field"><label>मॅन्युअल समायोजन ₹ (+/-)</label><input type="number" id="modalManualAdjust" placeholder="उदा. -200 किंवा 200"></div>
+        <div class="field"><label>कारण / टीप</label><input id="modalManualAdjustNote" placeholder="उदा. आगाऊ भरणा"></div>
+      </div>
+    </div>
+
+    <div id="billWrap"><div id="bill">
+      <div class="billHeader">
+        <div class="headerCow">
+          <svg viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
+            <ellipse cx="50" cy="48" rx="34" ry="22" fill="#fdf3ea" stroke="#7d1935" stroke-width="2.5"/>
+            <circle cx="24" cy="46" r="8" fill="#fdf3ea" stroke="#7d1935" stroke-width="2.5"/>
+            <circle cx="76" cy="46" r="8" fill="#fdf3ea" stroke="#7d1935" stroke-width="2.5"/>
+            <path d="M30 22 Q26 8 18 10" fill="none" stroke="#7d1935" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M70 22 Q74 8 82 10" fill="none" stroke="#7d1935" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="50" cy="30" rx="16" ry="13" fill="#fdf3ea" stroke="#7d1935" stroke-width="2.5"/>
+            <ellipse cx="50" cy="35" rx="9" ry="7" fill="#fff" stroke="#7d1935" stroke-width="2"/>
+            <circle cx="46" cy="35" r="1.6" fill="#7d1935"/><circle cx="54" cy="35" r="1.6" fill="#7d1935"/>
+            <circle cx="43" cy="26" r="2.3" fill="#7d1935"/><circle cx="57" cy="26" r="2.3" fill="#7d1935"/>
+            <path d="M20 60 Q10 66 8 74" fill="none" stroke="#7d1935" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="38" cy="52" rx="5" ry="3.5" fill="#d4af37" opacity="0.65"/>
+            <ellipse cx="58" cy="56" rx="6" ry="4" fill="#d4af37" opacity="0.65"/>
+          </svg>
+        </div>
+        <div class="headerCenter">
+          <div class="shopName" id="pv_shopName">डेअरी ट्रिट</div>
+          <div class="addr" id="pv_shopAddr"></div>
+          <div class="tag">आमच्या कडे गीर गायीचे दुध, साधे दुध, दही, ताक, पनीर, श्रीखंड, तुप मिळेल</div>
+        </div>
+        <div class="headerQr">
+          <div id="upiQrBox"></div>
+          <div class="qrHeaderLabel">स्कॅन करून<br>पैसे भरा</div>
+        </div>
+      </div>
+
+      <div class="custRow">
+        <div><span class="lbl">अ. क्र.: </span><span class="val" id="pv_billNo">—</span></div>
+        <div><span class="lbl">माहे: </span><span class="val" id="pv_month">—</span></div>
+        <div><span class="lbl">खातेदार: </span><span class="val" id="pv_custName">—</span></div>
+        <div><span class="lbl">मो. नं.: </span><span class="val" id="pv_custPhone">—</span></div>
+      </div>
+
+      <div id="pv_productTables"></div>
+
+      <div class="breakdownBox" style="margin-top:10px; font-size:12.5px; border-top:1px dashed #c9a97a; padding-top:8px;">
+        <div class="breakdownRow" style="display:flex; justify-content:space-between; padding:2px;"><span class="lbl">एकूण मात्रा: </span><span class="val" id="pv_totalQty" style="font-family:'Kalam',cursive; font-weight:700;">0</span></div>
+        <div class="breakdownRow" style="display:flex; justify-content:space-between; padding:2px;"><span class="lbl">रक्कम (₹): </span><span class="val" id="pv_milkAmount" style="font-family:'Kalam',cursive; font-weight:700;">0</span></div>
+        <div class="breakdownRow" id="pv_otherRow" style="display:none; justify-content:space-between; padding:2px;"><span class="lbl">इतर वस्तू (₹): </span><span class="val" id="pv_otherAmt" style="font-family:'Kalam',cursive; font-weight:700;">0</span></div>
+        <div class="breakdownRow" id="pv_prevRow" style="display:none; justify-content:space-between; padding:2px;"><span class="lbl">मागील शिल्लक (₹): </span><span class="val" id="pv_prevAmt" style="font-family:'Kalam',cursive; font-weight:700;">0</span></div>
+        <div class="breakdownRow" id="pv_adjustRow" style="display:none; justify-content:space-between; padding:2px;"><span class="lbl">समायोजन (<span id="pv_adjustNoteLbl"></span>): </span><span class="val" id="pv_adjustAmt" style="font-family:'Kalam',cursive; font-weight:700;">0</span></div>
+      </div>
+
+      <div class="amountBox">
+        <div class="lbl">एकूण देय रक्कम<br>(Grand Total):</div>
+        <div class="val">₹ <span id="pv_grandTotal">0</span></div>
+      </div>
+
+      <div class="noteRow" style="display:flex; justify-content:space-between; margin-top:12px; font-size:10px; color:#555;">
+        <div class="left">टीप:- होम डिलीव्हरीचे पेमेंट ५ तारखेपर्यंत करावे.</div>
+        <div class="right" style="text-align:right; color:var(--primary-dark); font-weight:600;">
+          प्रोप्रा. - <span id="pv_owner"></span><br>
+          फोन पे. <span id="pv_phonePay"></span> · कॉलिंग <span id="pv_callingNo"></span>
+        </div>
+      </div>
+
+      <div class="thanksLine" style="text-align:center; margin-top:8px; font-family:'Kalam',cursive; color:var(--primary); font-size:14px; font-weight:700;">🙏 धन्यवाद!</div>
+
+      <div class="signRow" style="display:flex; justify-content:space-between; margin-top:20px; font-size:11px; color:#444;">
+        <div style="width:40%; border-top:1px solid #999; text-align:center; padding-top:4px;">पैसे देण्याऱ्याची सही</div>
+        <div style="width:40%; border-top:1px solid #999; text-align:center; padding-top:4px;">पैसे घेणाऱ्याची सही</div>
+      </div>
+    </div></div>
+
+    <div class="modalActions">
+      <button class="btn solid" id="pdfBtn">📄 PDF डाउनलोड</button>
+      <button class="btn" id="shareBtn" disabled>लोड होत आहे...</button>
+      <button class="btn" id="whatsappBtn" style="background:#25D366; color:#fff; border-color:#1da851;">💬 WhatsApp (थेट)</button>
+      <button class="btn" style="background:#f0fdf4; border-color:#22c55e; color:#15803d;" id="markPaidBtn">✅ पैसे मिळाले</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCWofkg8pm6j-epZjPn-jIygvKNhk5JTyQ",
+  authDomain: "sai-nagar-dairy.firebaseapp.com",
+  projectId: "sai-nagar-dairy",
+  storageBucket: "sai-nagar-dairy.firebasestorage.app",
+  messagingSenderId: "261892986725",
+  appId: "1:261892986725:web:fe4b3d8fd2faee557bf38c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+try{ db.enablePersistence({synchronizeTabs:true}); }catch(e){ }
+
+/* ========================================================================
+   DATA STRUCTURE (v2 — split for speed)
+   dairyTreatApp/shopData                          -> { settings, updatedAt }
+   dairyTreatApp/shopData/customers/{custId}        -> one doc per customer (name/route/phone/products/ledger[])
+   dairyTreatApp/shopData/monthlyRecords/{YYYY-MM}  -> one doc per month: { custId: { type: { day: qty } } }
+
+   Older versions of this app stored EVERY customer and EVERY month of daily
+   quantities inside one single Firestore document, and re-uploaded the whole
+   thing on every single edit (typing one quantity, adding one payment, etc).
+   That document only grows over time, so saves kept getting slower and
+   slower until the app felt like it was hanging. This version writes only
+   the one customer or one month that actually changed. Existing data is
+   migrated into the new structure automatically, once, the first time this
+   version loads — nothing is deleted until the copy has fully succeeded.
+   ======================================================================== */
+
+const shopDocRef = db.collection('dairyTreatApp').doc('shopData');
+const customersColRef = shopDocRef.collection('customers');
+function monthRecordsRef(monthKey){ return shopDocRef.collection('monthlyRecords').doc(monthKey); }
+
+let customers = [];
+let records   = {};   // in-memory cache — only the month currently open in नोंदवही is kept here
+let settings  = {
+  shopName:'डेअरी ट्रिट', shopAddr:'बेनाम चौक, महाराष्ट्र बँकेच्या जवळ, साई नगर, अमरावती',
+  shopPhone:'9405437523', ownerName:'शशांक प्र. कठाळे', phonePay:'9075115742', callingNo:'9307476174',
+  upiVpa:'Q111876508@ybl', upiPayeeName:'Dairy Treat'
+};
+const DEFAULT_RATES = { gir:65, sadhe:55, mhashi:75, other:0 };
+
+document.getElementById('globalRouteFilter').addEventListener('change', () => {
+  renderRegister(); renderCustomersTab(); renderLedgerCustSelect(); renderPaymentsTab();
+});
+function getFilteredCustomers() {
+  const rFilter = document.getElementById('globalRouteFilter').value;
+  if(rFilter === 'all') return customers;
+  return customers.filter(c => c.route === rFilter);
+}
+
+function setSyncStatus(text, color){
+  const el = document.getElementById('syncStatus');
+  if(el){ el.textContent = text; el.style.background = color; }
+}
+
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+function genId(p){ return p+Date.now()+Math.random().toString(36).slice(2,7); }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function nowTimeStr(){
+  const d = new Date(); let h = d.getHours(); const mi = String(d.getMinutes()).padStart(2,'0');
+  const ampm = h>=12 ? 'PM' : 'AM'; h = h%12; if(h===0) h=12; return `${h}:${mi} ${ampm}`;
+}
+function typeLabel(type, otherLabel){ return type==='gir'?'गीर गायीचे दुध': type==='sadhe'?'साधे दुध': type==='mhashi'?'म्हशीचे दुध': (otherLabel||'इतर'); }
+const monthNames = ["जानेवारी","फेब्रुवारी","मार्च","एप्रिल","मे","जून","जुलै","ऑगस्ट","सप्टेंबर","ऑक्टोबर","नोव्हेंबर","डिसेंबर"];
+
+function normalizeCustomer(c){
+  if(!c.route) c.route = 'sai_nagar';
+  if(!c.products || c.products.length===0){ c.products = [{ type: c.productType || 'gir', rate: num(c.rate) || DEFAULT_RATES[c.productType]||65, otherLabel: c.otherProductName||'', usualQty: num(c.usualQty)||1 }]; }
+  c.products.forEach(p=>{ if(p.usualQty===undefined) p.usualQty = num(c.usualQty)||1; });
+  if(!c.ledger) c.ledger = [];
+  return c;
+}
+function normalizeMonthRecordsForCustomer(rowDataByType, primaryType){
+  // fixes the very old flat {day:qty} format (before multiple products per customer existed)
+  const looksOld = Object.keys(rowDataByType||{}).some(k=> !isNaN(parseInt(k)) && typeof rowDataByType[k] !== 'object');
+  if(!looksOld) return rowDataByType || {};
+  const fixed = {};
+  Object.keys(rowDataByType).forEach(k=>{
+    if(!isNaN(parseInt(k)) && typeof rowDataByType[k] !== 'object'){
+      fixed[primaryType] = fixed[primaryType] || {}; fixed[primaryType][k] = rowDataByType[k];
+    } else { fixed[k] = rowDataByType[k]; }
+  });
+  return fixed;
+}
+
+/* ---------- One-time migration out of the old single-document format ---------- */
+let migrationAttempted = false;
+function migrateLegacyShopDoc(data){
+  if(migrationAttempted) return; migrationAttempted = true;
+  const legacyCustomers = Array.isArray(data.customers) ? data.customers : null;
+  const legacyRecords = (data.records && typeof data.records==='object') ? data.records : null;
+  if(!legacyCustomers && !legacyRecords) return;
+  setSyncStatus('🔄 जुना डेटा नव्या (जलद) रचनेत स्थलांतरित करत आहे...', '#fef08a');
+  const jobs = [];
+  if(legacyCustomers){
+    legacyCustomers.forEach(c=>{
+      if(!c.id) c.id = genId('c');
+      normalizeCustomer(c);
+      jobs.push(customersColRef.doc(c.id).set(c, {merge:true}));
+    });
+  }
+  if(legacyRecords){
+    const lookupList = legacyCustomers || customers;
+    Object.keys(legacyRecords).forEach(monthKey=>{
+      const monthData = legacyRecords[monthKey] || {};
+      const fixedMonthData = {};
+      Object.keys(monthData).forEach(custId=>{
+        const cu = lookupList.find(x=>x.id===custId);
+        const primaryType = (cu && cu.products && cu.products[0]) ? cu.products[0].type : 'gir';
+        fixedMonthData[custId] = normalizeMonthRecordsForCustomer(monthData[custId], primaryType);
+      });
+      jobs.push(monthRecordsRef(monthKey).set(fixedMonthData, {merge:true}));
+    });
+  }
+  Promise.all(jobs).then(()=>{
+    return shopDocRef.set({ customers: firebase.firestore.FieldValue.delete(), records: firebase.firestore.FieldValue.delete() }, {merge:true});
+  }).then(()=>{
+    setSyncStatus('🟢 स्थलांतर पूर्ण झाले — आता सेव्ह जलद होईल', '#22c55e');
+  }).catch(err=>{
+    console.error('Migration error', err); migrationAttempted = false;
+    setSyncStatus('🔴 स्थलांतर अयशस्वी — पान रिलोड करून पुन्हा प्रयत्न करा', '#ef4444');
+  });
+}
+
+/* ---------- Settings doc (small — settings + one-time migration trigger) ---------- */
+shopDocRef.onSnapshot(snap=>{
+  if(!snap.exists){ setSyncStatus('🟢 तयार (ग्राहक जोडा)', '#22c55e'); return; }
+  if(snap.metadata.hasPendingWrites) return;
+  const data = snap.data();
+  settings = data.settings || settings;
+  fillSettingsForm();
+  migrateLegacyShopDoc(data);
+  setSyncStatus('🟢 सिंक झाले', '#22c55e');
+}, err=>{ console.error(err); setSyncStatus('🔴 डेटाबेसशी जोडता आले नाही', '#ef4444'); });
+
+/* ---------- Customers — one small document per customer ---------- */
+let pendingCustomersSnapshot = null;
+customersColRef.onSnapshot(snap=>{
+  if(snap.metadata.hasPendingWrites) return;
+  if(isUserActivelyEditing()){ pendingCustomersSnapshot = snap; return; }
+  applyCustomersSnapshot(snap);
+}, err=>{ console.error(err); setSyncStatus('🔴 ग्राहक डेटा मिळाला नाही', '#ef4444'); });
+
+function applyCustomersSnapshot(snap){
+  const list = [];
+  snap.forEach(doc=>{ const c = doc.data(); c.id = c.id || doc.id; normalizeCustomer(c); list.push(c); });
+  customers = list;
+  renderCustomersTab(); renderLedgerCustSelect(); renderRegister();
+  if(document.getElementById('ledgerDetail').style.display!=='none') renderLedgerDetail();
+  if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab();
+}
+function saveCustomerDoc(custId){
+  const c = customers.find(x=>x.id===custId); if(!c) return;
+  setSyncStatus('🔄 सेव्ह होत आहे...', '#fef08a');
+  customersColRef.doc(custId).set(c)
+    .then(()=> setSyncStatus('🟢 सिंक झाले', '#22c55e'))
+    .catch(err=>{ console.error(err); setSyncStatus('🔴 सिंक झाले नाही', '#ef4444'); });
+}
+
+/* ---------- Monthly records — one small document per month, only that month is loaded ---------- */
+let monthRecordsUnsub = null, subscribedMonthKey = null, pendingMonthSnapshot = null;
+function subscribeMonthRecords(monthKey){
+  if(subscribedMonthKey === monthKey && monthRecordsUnsub) return;
+  if(monthRecordsUnsub) monthRecordsUnsub();
+  subscribedMonthKey = monthKey; pendingMonthSnapshot = null;
+  if(!records[monthKey]) records[monthKey] = {};
+  monthRecordsUnsub = monthRecordsRef(monthKey).onSnapshot(snap=>{
+    if(snap.metadata.hasPendingWrites) return;
+    const data = snap.exists ? snap.data() : {};
+    if(isUserActivelyEditing()){ pendingMonthSnapshot = {monthKey, data}; return; }
+    records[monthKey] = data;
+    if(document.getElementById('tab-register').style.display!=='none' && currentMonthKey()===monthKey) renderRegister();
+  }, err=> console.error(err));
+}
+
+function isUserActivelyEditing(){
+  const ae = document.activeElement;
+  if(ae && (ae.tagName==='INPUT' || ae.tagName==='SELECT' || ae.tagName==='TEXTAREA')) return true;
+  return document.getElementById('billModalOverlay').style.display === 'flex' || document.getElementById('addOtherModalOverlay').style.display === 'flex';
+}
+document.addEventListener('focusout', ()=>{ setTimeout(maybeApplyPendingSnapshot, 300); }, true);
+function maybeApplyPendingSnapshot(){
+  if(isUserActivelyEditing()) return;
+  if(pendingCustomersSnapshot){ const s = pendingCustomersSnapshot; pendingCustomersSnapshot = null; applyCustomersSnapshot(s); }
+  if(pendingMonthSnapshot){
+    const {monthKey, data} = pendingMonthSnapshot; pendingMonthSnapshot = null; records[monthKey] = data;
+    if(document.getElementById('tab-register').style.display!=='none' && currentMonthKey()===monthKey) renderRegister();
+  }
+}
+
+/* ---------- Granular record-cell writes — THE main fix for the lag ---------- */
+let pendingRecordWrites = {}; // "custId.type.day" -> value, for whichever month is open
+let saveRecordsTimer = null;
+function queueRecordWrite(monthKey, custId, type, day, value){
+  pendingRecordWrites[`${custId}.${type}.${day}`] = value;
+  clearTimeout(saveRecordsTimer);
+  saveRecordsTimer = setTimeout(()=>{ saveRecordsTimer=null; flushRecordWrites(monthKey); }, 700);
+}
+function flushRecordWrites(monthKey){
+  if(saveRecordsTimer){ clearTimeout(saveRecordsTimer); saveRecordsTimer=null; }
+  const writes = pendingRecordWrites; pendingRecordWrites = {};
+  const keys = Object.keys(writes); if(keys.length===0) return;
+  const nested = {};
+  keys.forEach(k=>{
+    const [custId, type, day] = k.split('.');
+    nested[custId] = nested[custId] || {}; nested[custId][type] = nested[custId][type] || {};
+    nested[custId][type][day] = writes[k];
+  });
+  setSyncStatus('🔄 सेव्ह होत आहे...', '#fef08a');
+  monthRecordsRef(monthKey).set(nested, {merge:true})
+    .then(()=> setSyncStatus('🟢 सिंक झाले', '#22c55e'))
+    .catch(err=>{ console.error(err); setSyncStatus('🔴 सिंक झाले नाही', '#ef4444'); Object.assign(pendingRecordWrites, writes); });
+}
+function saveMonthRecordsFull(monthKey){
+  // used after bulk fills (quick-fill / fill-month) that touch many cells at once
+  if(!records[monthKey]) return;
+  setSyncStatus('🔄 सेव्ह होत आहे...', '#fef08a');
+  monthRecordsRef(monthKey).set(records[monthKey], {merge:true})
+    .then(()=> setSyncStatus('🟢 सिंक झाले', '#22c55e'))
+    .catch(err=>{ console.error(err); setSyncStatus('🔴 सिंक झाले नाही', '#ef4444'); });
+}
+
+let saveCustomerTimers = {}; // custId -> timeout id
+function debouncedSaveCustomerDoc(custId){
+  if(saveCustomerTimers[custId]) clearTimeout(saveCustomerTimers[custId]);
+  saveCustomerTimers[custId] = setTimeout(()=>{ delete saveCustomerTimers[custId]; saveCustomerDoc(custId); }, 700);
+}
+let saveSettingsTimer = null;
+function saveSettingsToDb(){
+  setSyncStatus('🔄 सेव्ह होत आहे...', '#fef08a');
+  shopDocRef.set({ settings, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true})
+    .then(()=> setSyncStatus('🟢 सिंक झाले', '#22c55e'))
+    .catch(err=>{ console.error(err); setSyncStatus('🔴 सिंक झाले नाही', '#ef4444'); });
+}
+function debouncedSaveSettings(){ clearTimeout(saveSettingsTimer); saveSettingsTimer = setTimeout(()=>{ saveSettingsTimer=null; saveSettingsToDb(); }, 700); }
+
+function flushPendingSaves(){
+  if(saveRecordsTimer){ clearTimeout(saveRecordsTimer); saveRecordsTimer=null; flushRecordWrites(currentMonthKey()); }
+  Object.keys(saveCustomerTimers).forEach(cid=>{ clearTimeout(saveCustomerTimers[cid]); delete saveCustomerTimers[cid]; saveCustomerDoc(cid); });
+  if(saveSettingsTimer){ clearTimeout(saveSettingsTimer); saveSettingsTimer=null; saveSettingsToDb(); }
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') flushPendingSaves(); }); window.addEventListener('pagehide', flushPendingSaves); window.addEventListener('beforeunload', flushPendingSaves);
+
+document.querySelectorAll('.tabBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+    document.querySelectorAll('.tabContent').forEach(t=>t.style.display='none');
+    document.getElementById('tab-'+btn.dataset.tab).style.display='block';
+    if(btn.dataset.tab==='customers') renderCustomersTab();
+    if(btn.dataset.tab==='ledger') { renderLedgerCustSelect(); }
+    if(btn.dataset.tab==='payments') { renderPaymentsTab(); }
+    if(btn.dataset.tab==='register') renderRegister();
+  });
+});
+
+function fillSettingsForm(){
+  document.getElementById('shopName').value = settings.shopName || 'डेअरी ट्रिट';
+  document.getElementById('topbarBrand').textContent = '🐄 ' + (settings.shopName || 'डेअरी ट्रिट');
+  document.getElementById('shopAddr').value = settings.shopAddr;
+  document.getElementById('shopPhone').value = settings.shopPhone;
+  document.getElementById('ownerName').value = settings.ownerName;
+  document.getElementById('phonePay').value = settings.phonePay;
+  document.getElementById('callingNo').value = settings.callingNo;
+  document.getElementById('upiVpa').value = settings.upiVpa;
+  document.getElementById('upiPayeeName').value = settings.upiPayeeName;
+}
+['shopName','shopAddr','shopPhone','ownerName','phonePay','callingNo','upiVpa','upiPayeeName'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', e=>{
+    settings[id]=e.target.value;
+    if(id==='shopName') document.getElementById('topbarBrand').textContent = '🐄 ' + (settings.shopName || 'डेअरी ट्रिट');
+    debouncedSaveSettings();
+  });
+  document.getElementById(id).addEventListener('blur', flushPendingSaves);
+});
+fillSettingsForm();
+
+document.getElementById('exportBackupBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('exportBackupBtn'); const orig = btn.textContent; btn.textContent='तयार करत आहे...'; btn.disabled = true;
+  try{
+    const monthsSnap = await shopDocRef.collection('monthlyRecords').get();
+    const allRecords = {}; monthsSnap.forEach(d=>{ allRecords[d.id] = d.data(); });
+    const all = { customers, records: allRecords, settings, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(all,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download = `dairy_treat_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }catch(err){ alert('बॅकअप तयार करताना अडचण आली: '+err.message); }
+  btn.textContent = orig; btn.disabled = false;
+});
+document.getElementById('importBackupBtn').addEventListener('click', ()=> document.getElementById('importFileInput').click());
+document.getElementById('importFileInput').addEventListener('change', e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async ()=>{
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data.customers || !data.records) throw new Error('चुकीचा बॅकअप फॉरमॅट');
+      if(!confirm('सध्याचा सर्व डेटा बदलून बॅकअपमधील डेटा लोड करायचा आहे का?')) return;
+      setSyncStatus('🔄 बॅकअप लोड करत आहे...', '#fef08a');
+      const custSnap = await customersColRef.get();
+      await Promise.all(custSnap.docs.map(d=> d.ref.delete()));
+      const monthsSnap = await shopDocRef.collection('monthlyRecords').get();
+      await Promise.all(monthsSnap.docs.map(d=> d.ref.delete()));
+      const writeJobs = [];
+      data.customers.forEach(c=>{ if(!c.id) c.id = genId('c'); normalizeCustomer(c); writeJobs.push(customersColRef.doc(c.id).set(c)); });
+      Object.keys(data.records).forEach(mk=> writeJobs.push(monthRecordsRef(mk).set(data.records[mk]||{})));
+      settings = data.settings || settings;
+      writeJobs.push(shopDocRef.set({settings}, {merge:true}));
+      await Promise.all(writeJobs);
+      fillSettingsForm();
+      setSyncStatus('🟢 सिंक झाले', '#22c55e');
+      alert('बॅकअप यशस्वीरित्या लोड झाला.');
+    }catch(err){ console.error(err); alert('बॅकअप वाचता आला नाही: '+err.message); setSyncStatus('🔴 सिंक झाले नाही', '#ef4444'); }
+  };
+  reader.readAsText(file); e.target.value='';
+});
+document.getElementById('resetAllBtn').addEventListener('click', async ()=>{
+  if(!confirm('संपूर्ण डेटा कायमचा मिटवायचा आहे का? आधी बॅकअप घेतला आहे याची खात्री करा.')) return;
+  if(!confirm('पुन्हा एकदा खात्री करा — ही क्रिया परत करता येणार नाही. मिटवायचे?')) return;
+  setSyncStatus('🔄 मिटवत आहे...', '#fef08a');
+  try{
+    const custSnap = await customersColRef.get();
+    const monthsSnap = await shopDocRef.collection('monthlyRecords').get();
+    await Promise.all([...custSnap.docs.map(d=> d.ref.delete()), ...monthsSnap.docs.map(d=> d.ref.delete())]);
+    customers = []; records = {};
+    renderRegister(); renderCustomersTab(); renderLedgerCustSelect();
+    setSyncStatus('🟢 डेटा मिटवला', '#22c55e');
+  }catch(err){ console.error(err); setSyncStatus('🔴 मिटवताना अडचण आली', '#ef4444'); }
+});
+
+document.getElementById('newCustProduct').addEventListener('change', e=>{
+  document.getElementById('newCustOtherNameWrap').style.display = e.target.value==='other' ? 'block':'none';
+  document.getElementById('newCustRate').value = DEFAULT_RATES[e.target.value] ?? '';
+});
+
+document.getElementById('addCustBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('newCustName').value.trim();
+  const route = document.getElementById('newCustRoute').value;
+  if(!name){ alert('कृपया ग्राहकाचे नांव टाका'); return; }
+  const maxSeq = customers.reduce((m,c)=>Math.max(m,c.seq||0),0);
+  const type = document.getElementById('newCustProduct').value;
+  const c = {
+    id: genId('c'), seq: maxSeq+1, name, route, phone: document.getElementById('newCustPhone').value.trim(),
+    products: [{ type, otherLabel: document.getElementById('newCustOtherName').value.trim(), rate: num(document.getElementById('newCustRate').value), usualQty: num(document.getElementById('newCustUsualQty').value) }], ledger: []
+  };
+  customers.push(c); saveCustomerDoc(c.id);
+  document.getElementById('newCustName').value=''; document.getElementById('newCustPhone').value=''; document.getElementById('newCustOtherName').value='';
+  renderCustomersTab(); renderRegister();
+});
+
+function renderCustomersTab(){
+  const body = document.getElementById('custBody'); body.innerHTML='';
+  let filteredCusts = getFilteredCustomers();
+  const sorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0));
+
+  sorted.forEach((c,idx)=>{
+    if(!c.products || c.products.length===0) c.products = [{type:'gir', rate:DEFAULT_RATES.gir, otherLabel:'', usualQty:1}];
+    if(!c.route) c.route = 'sai_nagar';
+    const usedTypes = c.products.map(p=>p.type);
+    const availableTypes = ['gir','sadhe','mhashi','other'].filter(t=> t==='other' || !usedTypes.includes(t));
+
+    const productsHtml = c.products.map((p,pi)=>`
+      <div class="prodLine" data-pidx="${pi}">
+        <select class="pType">
+          <option value="gir" ${p.type==='gir'?'selected':''}>गीर</option>
+          <option value="sadhe" ${p.type==='sadhe'?'selected':''}>साधे</option>
+          <option value="mhashi" ${p.type==='mhashi'?'selected':''}>म्हशी</option>
+          <option value="other" ${p.type==='other'?'selected':''}>इतर</option>
+        </select>
+        ${p.type==='other' ? `<input class="pOtherLabel" placeholder="नांव" value="${escapeHtml(p.otherLabel||'')}">` : ''}
+        <input type="number" class="pRate" value="${p.rate}" title="दर">
+        <input type="number" step="0.25" class="pUsual" value="${p.usualQty!==undefined?p.usualQty:1}" title="मात्रा">
+        ${c.products.length>1 ? `<button class="btn danger small pDel" title="काढा">✕</button>` : ''}
+      </div>`).join('');
+    const addProductHtml = availableTypes.filter(t=>t!=='other'||true).length>0
+      ? `<select class="pAddSel"><option value="">+ प्रकार</option>${availableTypes.map(t=>`<option value="${t}">${typeLabel(t)}</option>`).join('')}</select>` : '';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="seqBtns"><button data-act="up" title="वर">▲</button><span>${c.seq}</span><button data-act="down" title="खाली">▼</button></div></td>
+      <td><input class="cName" value="${escapeHtml(c.name)}"></td>
+      <td><select class="cRoute"><option value="sai_nagar" ${c.route==='sai_nagar'?'selected':''}>साई नगर</option><option value="gopal_nagar" ${c.route==='gopal_nagar'?'selected':''}>गोपाळ नगर</option><option value="prasad_nagar" ${c.route==='prasad_nagar'?'selected':''}>प्रसाद नगर</option></select></td>
+      <td><input class="cPhone" value="${escapeHtml(c.phone||'')}"></td>
+      <td colspan="3" style="text-align:left;"><div class="prodEditor">${productsHtml}</div>${addProductHtml}</td>
+      <td><button class="btn danger small" data-act="del">✕</button></td>`;
+
+    tr.querySelector('.cName').addEventListener('input', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur) return; cur.name = e.target.value; debouncedSaveCustomerDoc(c.id); renderLedgerCustSelect(); });
+    tr.querySelector('.cName').addEventListener('blur', flushPendingSaves);
+
+    tr.querySelector('.cRoute').addEventListener('change', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur) return; cur.route = e.target.value; saveCustomerDoc(c.id); renderCustomersTab(); renderRegister(); renderLedgerCustSelect(); });
+    tr.querySelector('.cPhone').addEventListener('input', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur) return; cur.phone = e.target.value; debouncedSaveCustomerDoc(c.id); renderLedgerCustSelect(); });
+    tr.querySelector('.cPhone').addEventListener('blur', flushPendingSaves);
+
+    tr.querySelectorAll('.prodLine').forEach(line=>{
+      const pi = parseInt(line.dataset.pidx); const typeSel = line.querySelector('.pType'); const rateInp = line.querySelector('.pRate'); const usualInp = line.querySelector('.pUsual'); const otherInp = line.querySelector('.pOtherLabel');
+      typeSel.addEventListener('change', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur || !cur.products[pi]) return; cur.products[pi].type = e.target.value; cur.products[pi].rate = DEFAULT_RATES[e.target.value] ?? cur.products[pi].rate; saveCustomerDoc(c.id); renderCustomersTab(); renderRegister(); });
+      rateInp.addEventListener('input', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur || !cur.products[pi]) return; cur.products[pi].rate = num(e.target.value); debouncedSaveCustomerDoc(c.id); });
+      rateInp.addEventListener('blur', flushPendingSaves);
+      usualInp.addEventListener('input', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur || !cur.products[pi]) return; cur.products[pi].usualQty = num(e.target.value); debouncedSaveCustomerDoc(c.id); });
+      usualInp.addEventListener('blur', flushPendingSaves);
+      if(otherInp){ otherInp.addEventListener('input', e=>{ const cur = customers.find(x=>x.id===c.id); if(!cur || !cur.products[pi]) return; cur.products[pi].otherLabel = e.target.value; debouncedSaveCustomerDoc(c.id); }); otherInp.addEventListener('blur', flushPendingSaves); }
+      const delBtn = line.querySelector('.pDel');
+      if(delBtn) delBtn.addEventListener('click', ()=>{ const cur = customers.find(x=>x.id===c.id); if(!cur) return; cur.products.splice(pi,1); saveCustomerDoc(c.id); renderCustomersTab(); renderRegister(); });
+    });
+    const addSel = tr.querySelector('.pAddSel');
+    if(addSel) addSel.addEventListener('change', e=>{ const t = e.target.value; if(!t) return; const cur = customers.find(x=>x.id===c.id); if(!cur) return; cur.products.push({ type:t, rate: DEFAULT_RATES[t] ?? 0, otherLabel:'', usualQty:1 }); saveCustomerDoc(c.id); renderCustomersTab(); renderRegister(); });
+
+    tr.querySelector('[data-act="del"]').addEventListener('click', ()=>{ const cur = customers.find(x=>x.id===c.id); if(!cur) return; if(!confirm(`${cur.name} यांना कायमचे काढायचे आहे का?`)) return; customers = customers.filter(x=>x.id!==cur.id); Object.keys(records).forEach(mk=> delete records[mk][cur.id]); customersColRef.doc(cur.id).delete(); renderCustomersTab(); renderRegister(); renderLedgerCustSelect(); });
+    tr.querySelector('[data-act="up"]').addEventListener('click', ()=>{ const curSorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0)); const i = curSorted.findIndex(x=>x.id===c.id); if(i<=0) return; const cur = curSorted[i], other = curSorted[i-1]; const t=cur.seq; cur.seq=other.seq; other.seq=t; saveCustomerDoc(cur.id); saveCustomerDoc(other.id); renderCustomersTab(); renderRegister(); });
+    tr.querySelector('[data-act="down"]').addEventListener('click', ()=>{ const curSorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0)); const i = curSorted.findIndex(x=>x.id===c.id); if(i<0 || i>=curSorted.length-1) return; const cur = curSorted[i], other = curSorted[i+1]; const t=cur.seq; cur.seq=other.seq; other.seq=t; saveCustomerDoc(cur.id); saveCustomerDoc(other.id); renderCustomersTab(); renderRegister(); });
+    body.appendChild(tr);
+  });
+}
+
+const regMonthSel = document.getElementById('regMonth'); monthNames.forEach((m,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=m; regMonthSel.appendChild(o); });
+regMonthSel.value = new Date().getMonth();
+const regYearSel = document.getElementById('regYear'); const curYearNow = new Date().getFullYear();
+for(let y=curYearNow-3; y<=curYearNow+2; y++){ const o = document.createElement('option'); o.value=y; o.textContent=y; regYearSel.appendChild(o); }
+regYearSel.value = curYearNow;
+
+regMonthSel.addEventListener('change', ()=>{ subscribeMonthRecords(currentMonthKey()); renderRegister(); });
+regYearSel.addEventListener('change', ()=>{ subscribeMonthRecords(currentMonthKey()); renderRegister(); });
+
+function currentMonthKey(){ const y = parseInt(document.getElementById('regYear').value)||new Date().getFullYear(); const m = parseInt(regMonthSel.value); return `${y}-${String(m+1).padStart(2,'0')}`; }
+function daysInMonth(){ const y = parseInt(document.getElementById('regYear').value)||new Date().getFullYear(); const m = parseInt(regMonthSel.value); return new Date(y, m+1, 0).getDate(); }
+function isTodayCol(day){ const y = parseInt(document.getElementById('regYear').value)||new Date().getFullYear(); const m = parseInt(regMonthSel.value); const today = new Date(); return y===today.getFullYear() && m===today.getMonth() && day===today.getDate(); }
+
+function patchRowTotals(custId, type, monthKey, inputEl){
+  const c = customers.find(x=>x.id===custId); if(!c) return; const p = (c.products||[]).find(pp=>pp.type===type); if(!p) return;
+  const nDays = daysInMonth(); const rowData = (records[monthKey] && records[monthKey][custId] && records[monthKey][custId][type]) || {};
+  let totQty = 0; for(let d=1; d<=nDays; d++) totQty += num(rowData[d]);
+  const lineAmt = totQty * (p.rate||0);
+  const tr = inputEl.closest('tr');
+  if(tr){ const totCell = tr.querySelector('.totCell'); const amtCell = tr.querySelector('.amtCell'); if(totCell) totCell.textContent = totQty.toFixed(2); if(amtCell) amtCell.textContent = '₹'+lineAmt.toFixed(0); }
+  let grandTotal = 0; const filteredCusts = getFilteredCustomers();
+  filteredCusts.forEach(cc=>{ (cc.products||[]).forEach(pp=>{ const rd = (records[monthKey] && records[monthKey][cc.id] && records[monthKey][cc.id][pp.type]) || {}; let q=0; for(let d=1; d<=nDays; d++) q += num(rd[d]); grandTotal += q*(pp.rate||0); }); });
+  const gEl = document.getElementById('regGrandTotal'); if(gEl) gEl.textContent = grandTotal.toFixed(0);
+}
+
+function renderRegister(){
+  const table = document.getElementById('regTable'); const monthKey = currentMonthKey(); const nDays = daysInMonth();
+  if(!records[monthKey]) records[monthKey] = {};
+  let filteredCusts = getFilteredCustomers(); const sorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0));
+
+  let thead = '<thead><tr><th class="nameHead">ग्राहक</th><th>प्रकार</th>';
+  for(let d=1; d<=nDays; d++) { let cls = isTodayCol(d) ? ' class="dayHead today"' : ' class="dayHead"'; thead += `<th${cls}>${d}</th>`; }
+  thead += '<th>लि.</th><th>₹</th><th>बिल</th></tr></thead>';
+
+  let tbody = '<tbody>'; let grandTotal = 0;
+  sorted.forEach(c=>{
+    if(!c.products || c.products.length===0) c.products = [{type:'gir', rate:DEFAULT_RATES.gir, otherLabel:'', usualQty:1}];
+    if(!records[monthKey][c.id]) records[monthKey][c.id] = {};
+    const nProd = c.products.length; const paidTag = `[${monthKey}]`;
+    const totalReceived = (c.ledger||[]).filter(e=>e.type==='credit' && e.note && e.note.includes(paidTag)).reduce((s,e)=>s+num(e.amount),0);
+    const monthInfo = computeMonthAmount(c.id, monthKey);
+    let paidBtnHtml;
+    if(totalReceived<=0){ paidBtnHtml = `<br><button class="btn small" data-markrecv="${c.id}" title="पैसे मिळाले म्हणून नोंदवा">💰 मिळाले?</button>`; }
+    else if(totalReceived < monthInfo.grandTotal - 0.5){ paidBtnHtml = `<br><button class="btn small partialPaid" data-markrecv="${c.id}" title="आणखी रक्कम नोंदवा">🟡 ₹${totalReceived.toFixed(0)}</button>`; }
+    else { paidBtnHtml = `<br><button class="btn small paidYes" data-unpaid="${c.id}" title="रद्द करा">✅ मिळाले</button>`; }
+
+    let custAmt = 0;
+    c.products.forEach((p, pi)=>{
+      if(!records[monthKey][c.id][p.type]) records[monthKey][c.id][p.type] = {};
+      const rowData = records[monthKey][c.id][p.type];
+      let totQty = 0, cells = '';
+      for(let d=1; d<=nDays; d++){
+        const v = rowData[d] !== undefined ? rowData[d] : ''; totQty += num(v); let markHtml = '';
+        if(pi===0){
+          const dateStr = `${monthKey}-${String(d).padStart(2,'0')}`; const dayOtherEntries = (c.ledger||[]).filter(en=> en.date===dateStr && en.type==='debit');
+          if(dayOtherEntries.length>0){ const dayOtherTotal = dayOtherEntries.reduce((s,en)=>s+num(en.amount),0); markHtml = `<div class="otherMark" data-mark-cust="${c.id}" data-mark-date="${dateStr}">🧾₹${dayOtherTotal.toFixed(0)}</div>`; }
+        }
+        cells += `<td class="dayCell${isTodayCol(d)?' today':''}"><input type="number" min="0" step="0.25" list="qtyDatalist" data-cust="${c.id}" data-type="${p.type}" data-day="${d}" value="${v}">${markHtml}</td>`;
+      }
+      const lineAmt = totQty * (p.rate||0); custAmt += lineAmt;
+
+      const nameCellHtml = pi===0 ? `<td class="nameCell" rowspan="${nProd}">${escapeHtml(c.name)} ${paidBtnHtml}</td>` : '';
+      const actionCellsHtml = pi===0 ? `<td rowspan="${nProd}"><button class="btn small" data-bill="${c.id}">बिल</button><br><button class="btn small" data-addother="${c.id}" style="margin-top:4px;">🧾+</button></td>` : '';
+
+      let typeName = p.type==='gir'?'गीर':p.type==='sadhe'?'साधे':p.type==='mhashi'?'म्हशी':p.otherLabel||'इतर';
+      tbody += `<tr>${nameCellHtml}<td class="prodTypeCell">${typeName}<div class="custMeta">₹${p.rate}/लि.</div></td>${cells}<td class="totCell">${totQty.toFixed(2)}</td><td class="amtCell">₹${lineAmt.toFixed(0)}</td>${actionCellsHtml}</tr>`;
+    });
+    grandTotal += custAmt;
+  });
+  tbody += '</tbody>';
+
+  table.innerHTML = thead + tbody;
+  document.getElementById('regGrandTotal').textContent = grandTotal.toFixed(0);
+
+  table.querySelectorAll('input[data-cust]').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const custId = e.target.dataset.cust, type = e.target.dataset.type, day = e.target.dataset.day;
+      if(!records[monthKey]) records[monthKey] = {}; if(!records[monthKey][custId]) records[monthKey][custId] = {}; if(!records[monthKey][custId][type]) records[monthKey][custId][type] = {};
+      records[monthKey][custId][type][day] = e.target.value;
+      patchRowTotals(custId, type, monthKey, e.target);
+      queueRecordWrite(monthKey, custId, type, day, e.target.value);
+    });
+    inp.addEventListener('blur', flushPendingSaves);
+  });
+  table.querySelectorAll('[data-bill]').forEach(btn=>{ btn.addEventListener('click', ()=> openBillModal(btn.dataset.bill, monthKey)); });
+  table.querySelectorAll('.otherMark').forEach(mark=>{
+    mark.addEventListener('click', e=>{
+      e.stopPropagation(); const custId = mark.dataset.markCust, dateStr = mark.dataset.markDate; const c = customers.find(x=>x.id===custId); if(!c) return;
+      const entries = (c.ledger||[]).filter(en=> en.date===dateStr && en.type==='debit'); const lines = entries.map(en=> `• ${en.note||'वस्तू'} — ₹${num(en.amount).toFixed(0)}`).join('\n'); alert(`${c.name} — ${dateStr}\n\n${lines}`);
+    });
+  });
+  table.querySelectorAll('[data-addother]').forEach(btn=>{ btn.addEventListener('click', ()=> openAddOtherModal(btn.dataset.addother)); });
+  table.querySelectorAll('[data-markrecv]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const custId = btn.dataset.markrecv; const c = customers.find(x=>x.id===custId); if(!c) return;
+      const info = computeMonthAmount(custId, monthKey); const y = monthKey.slice(0,4), m = parseInt(monthKey.slice(5,7))-1; const monthLabel = monthNames[m] + ' ' + y;
+      const entered = prompt(`${c.name} — ${monthLabel}\nएकूण बिल: ₹${info.grandTotal.toFixed(0)}\n\nकिती रक्कम मिळाली? (पूर्ण रक्कम मिळाली असल्यास तशीच ठेवा)`, info.grandTotal.toFixed(0));
+      if(entered===null) return; const amount = num(entered); if(!amount || amount<=0){ alert('कृपया बरोबर रक्कम टाका.'); return; }
+      if(!confirm(`${c.name} कडून ₹${amount.toFixed(0)} मिळाले म्हणून नोंदवायचे का?`)) return;
+      if(!c.ledger) c.ledger=[]; const partialTag = amount < info.grandTotal ? ' (अंशतः)' : '';
+      c.ledger.push({ id:genId('e'), date:new Date().toISOString().slice(0,10), type:'credit', note:`बिल पेमेंट - ${monthLabel}${partialTag} [${monthKey}]`, amount, time:nowTimeStr(), ts:Date.now() });
+      saveCustomerDoc(custId); renderRegister(); if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab();
+    });
+  });
+  table.querySelectorAll('[data-unpaid]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const custId = btn.dataset.unpaid; const c = customers.find(x=>x.id===custId); if(!c) return; const paidTag = `[${monthKey}]`;
+      if(!confirm(`${c.name} — या महिन्याची "पैसे मिळाले" नोंद रद्द करायची आहे का?`)) return;
+      c.ledger = (c.ledger||[]).filter(e=> !(e.type==='credit' && e.note && e.note.includes(paidTag)));
+      saveCustomerDoc(custId); renderRegister(); if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab();
+    });
+  });
+}
+
+let addOtherCustId = null;
+function openAddOtherModal(custId){
+  const c = customers.find(x=>x.id===custId); if(!c) return; addOtherCustId = custId;
+  document.getElementById('addOtherCustLabel').textContent = c.name + ' यांच्यासाठी इतर वस्तूची नोंद (उदा. तूप, पनीर, श्रीखंड).';
+  document.getElementById('addOtherDate').value = new Date().toISOString().slice(0,10);
+  document.getElementById('addOtherNote').value = ''; document.getElementById('addOtherAmount').value = '';
+  document.getElementById('addOtherModalOverlay').style.display = 'flex';
+}
+function closeAddOtherModal(){ document.getElementById('addOtherModalOverlay').style.display = 'none'; addOtherCustId = null; setTimeout(maybeApplyPendingSnapshot, 300); }
+document.getElementById('addOtherCloseBtn').addEventListener('click', closeAddOtherModal);
+document.getElementById('addOtherCancelBtn').addEventListener('click', closeAddOtherModal);
+document.getElementById('addOtherModalOverlay').addEventListener('click', e=>{ if(e.target.id==='addOtherModalOverlay') closeAddOtherModal(); });
+document.getElementById('addOtherSaveBtn').addEventListener('click', ()=>{
+  const c = customers.find(x=>x.id===addOtherCustId); if(!c){ closeAddOtherModal(); return; }
+  const dateStr = document.getElementById('addOtherDate').value; const note = document.getElementById('addOtherNote').value.trim(); const amount = num(document.getElementById('addOtherAmount').value);
+  if(!dateStr){ alert('कृपया दिनांक निवडा.'); return; } if(!note){ alert('कृपया वस्तूचे नांव टाका.'); return; } if(!amount || amount<=0){ alert('कृपया बरोबर रक्कम टाका.'); return; }
+  if(!c.ledger) c.ledger = []; c.ledger.push({ id:genId('e'), date:dateStr, type:'debit', note, amount, time:nowTimeStr(), ts:Date.now() });
+  saveCustomerDoc(c.id); closeAddOtherModal(); renderRegister();
+  if(dateStr.slice(0,7) !== currentMonthKey()){ alert(`नोंद जतन झाली, पण ती ${dateStr} तारखेची आहे — सध्या नोंदवहीत वेगळा महिना दिसत आहे, त्यामुळे ती आत्ता इथे दिसणार नाही. योग्य महिना निवडून पहा.`); }
+});
+
+document.getElementById('quickFillBtn').addEventListener('click', ()=>{
+  const monthKey = currentMonthKey(); const y = parseInt(document.getElementById('regYear').value)||new Date().getFullYear(); const m = parseInt(regMonthSel.value);
+  if(!(y===new Date().getFullYear() && m===new Date().getMonth())){ alert('ही सोय फक्त चालू महिन्यासाठी वापरता येईल.'); return; }
+  const d = new Date().getDate(); if(!records[monthKey]) records[monthKey] = {};
+  getFilteredCustomers().forEach(c=>{
+    if(!c.products || c.products.length===0) return; if(!records[monthKey][c.id]) records[monthKey][c.id] = {};
+    c.products.forEach(p=>{ if(!records[monthKey][c.id][p.type]) records[monthKey][c.id][p.type] = {}; if(!records[monthKey][c.id][p.type][d]) records[monthKey][c.id][p.type][d] = (p.usualQty!==undefined ? p.usualQty : 1); });
+  });
+  saveMonthRecordsFull(monthKey); renderRegister();
+});
+
+document.getElementById('fillMonthBtn').addEventListener('click', ()=>{
+  const monthKey = currentMonthKey(); const nDays = daysInMonth(); const y = monthKey.slice(0,4), m = parseInt(monthKey.slice(5,7))-1; const monthLabel = monthNames[m] + ' ' + y;
+  const rFilter = document.getElementById('globalRouteFilter').value; const filterLabel = rFilter === 'all' ? 'सर्व मार्गांवरील' : (rFilter === 'sai_nagar' ? 'साई नगर मार्गावरील' : (rFilter === 'gopal_nagar' ? 'गोपाळ नगर मार्गावरील' : 'प्रसाद नगर मार्गावरील'));
+  if(!confirm(`${monthLabel} या संपूर्ण महिन्यातील ${filterLabel} सर्व ग्राहकांच्या रिकाम्या तारखा त्यांच्या नेहमीच्या मात्रेने भरायच्या आहेत का? (आधीपासून भरलेल्या तारखांना धक्का लागणार नाही)`)) return;
+  if(!records[monthKey]) records[monthKey] = {};
+  getFilteredCustomers().forEach(c=>{
+    if(!c.products || c.products.length===0) return; if(!records[monthKey][c.id]) records[monthKey][c.id] = {};
+    c.products.forEach(p=>{ if(!records[monthKey][c.id][p.type]) records[monthKey][c.id][p.type] = {}; for(let d=1; d<=nDays; d++){ if(records[monthKey][c.id][p.type][d]===undefined || records[monthKey][c.id][p.type][d]===''){ records[monthKey][c.id][p.type][d] = (p.usualQty!==undefined ? p.usualQty : 1); } } });
+  });
+  saveMonthRecordsFull(monthKey); renderRegister(); alert(`${monthLabel} महिन्याच्या रिकाम्या तारखा भरल्या.`);
+});
+
+let selectedLedgerCustId = null;
+function renderPaymentsTab(){
+  let allPayments = []; const filteredCusts = getFilteredCustomers();
+  filteredCusts.forEach(c=>{ (c.ledger||[]).filter(e=>e.type==='credit').forEach(e=>{ allPayments.push({ custId:c.id, custName:c.name, date:e.date, time:e.time||'—', note:e.note||'', amount:num(e.amount), ts:e.ts||0 }); }); });
+  allPayments.sort((a,b)=>{ if(a.date!==b.date) return a.date<b.date?1:-1; return (b.ts||0)-(a.ts||0); });
+
+  const monthSel = document.getElementById('paymentsMonthFilter'); const custSel = document.getElementById('paymentsCustFilter');
+  const prevMonthVal = monthSel.value, prevCustVal = custSel.value;
+  const monthsArr = [...new Set(allPayments.map(p=>p.date.slice(0,7)))].sort().reverse();
+  monthSel.innerHTML = '<option value="">-- सर्व --</option>' + monthsArr.map(mk=>{ const y=mk.slice(0,4), m=parseInt(mk.slice(5,7))-1; return `<option value="${mk}">${monthNames[m]} ${y}</option>`; }).join('');
+  monthSel.value = monthsArr.includes(prevMonthVal) ? prevMonthVal : '';
+
+  const sortedCust = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0));
+  custSel.innerHTML = '<option value="">-- सर्व ग्राहक --</option>' + sortedCust.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  custSel.value = filteredCusts.some(c=>c.id===prevCustVal) ? prevCustVal : '';
+
+  const monthFilter = monthSel.value, custFilter = custSel.value;
+  const filtered = allPayments.filter(p=> (!monthFilter || p.date.slice(0,7)===monthFilter) && (!custFilter || p.custId===custFilter));
+
+  const tbody = document.getElementById('paymentsBody');
+  tbody.innerHTML = filtered.length===0
+    ? `<tr><td colspan="5" style="color:#94a3b8;">कोणतीही नोंद सापडली नाही.</td></tr>`
+    : filtered.map(p=>`<tr><td>${p.date}</td><td>${p.time}</td><td>${escapeHtml(p.custName)}</td><td style="text-align:left;">${escapeHtml(p.note)}</td><td>₹${p.amount.toFixed(0)}</td></tr>`).join('');
+  document.getElementById('paymentsGrandTotal').textContent = filtered.reduce((s,p)=>s+p.amount,0).toFixed(0);
+}
+document.getElementById('paymentsMonthFilter').addEventListener('change', renderPaymentsTab); document.getElementById('paymentsCustFilter').addEventListener('change', renderPaymentsTab);
+
+function renderLedgerCustSelect(){
+  const sel = document.getElementById('ledgerCustSel'); const prev = sel.value; const filteredCusts = getFilteredCustomers(); const sorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0));
+  sel.innerHTML = '<option value="">-- ग्राहक निवडा --</option>' + sorted.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}${c.phone?' ('+c.phone+')':''}</option>`).join('');
+  if(filteredCusts.find(c=>c.id===prev)) sel.value = prev; else { selectedLedgerCustId = null; document.getElementById('ledgerDetail').style.display = 'none'; }
+}
+document.getElementById('ledgerCustSel').addEventListener('change', e=>{ selectedLedgerCustId = e.target.value || null; document.getElementById('ledgerDetail').style.display = selectedLedgerCustId ? 'block':'none'; if(selectedLedgerCustId) renderLedgerDetail(); });
+function currentLedgerCustomer(){ return customers.find(c=>c.id===selectedLedgerCustId); }
+function renderLedgerDetail(){
+  const c = currentLedgerCustomer(); if(!c) return;
+  document.getElementById('ledgerCustNameShow').textContent = c.name; document.getElementById('ledgerCustPhoneShow').textContent = c.phone || '';
+  const body = document.getElementById('ledgerBody'); body.innerHTML = ''; let bal = 0;
+  const sorted = [...(c.ledger||[])].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  sorted.forEach(entry=>{
+    const credit = entry.type==='credit'?num(entry.amount):0; const debit = entry.type==='debit'?num(entry.amount):0; bal += debit - credit;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${entry.date||''}</td><td style="text-align:left;">${escapeHtml(entry.note||'')}</td><td style="color:#16a34a; font-weight:600;">${credit?credit.toFixed(0):''}</td><td style="color:#ef4444; font-weight:600;">${debit?debit.toFixed(0):''}</td><td style="font-weight:700;">${bal.toFixed(0)}</td><td><button class="ledgerDelBtn" data-id="${entry.id}">✕</button></td>`;
+    body.appendChild(tr);
+  });
+  const lbl = bal>0?' (येणे बाकी)':(bal<0?' (जास्त जमा)':''); document.getElementById('ledgerBalance').textContent = '₹ '+bal.toFixed(0)+lbl;
+  body.querySelectorAll('.ledgerDelBtn').forEach(btn=>{ btn.addEventListener('click', ()=>{ c.ledger = c.ledger.filter(e=>e.id!==btn.dataset.id); saveCustomerDoc(c.id); renderLedgerDetail(); if(document.getElementById('tab-register').style.display!=='none') renderRegister(); if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab(); }); });
+}
+document.getElementById('addEntryBtn').addEventListener('click', ()=>{
+  const c = currentLedgerCustomer(); if(!c){ alert('आधी ग्राहक निवडा'); return; }
+  const date = document.getElementById('entryDate').value || new Date().toISOString().slice(0,10); const type = document.getElementById('entryType').value; const note = document.getElementById('entryNote').value.trim(); const amount = num(document.getElementById('entryAmount').value);
+  if(!amount){ alert('रक्कम टाका'); return; } if(!c.ledger) c.ledger=[];
+  c.ledger.push({id:genId('e'), date, type, note, amount, time:nowTimeStr(), ts:Date.now()});
+  saveCustomerDoc(c.id); document.getElementById('entryNote').value=''; document.getElementById('entryAmount').value=''; renderLedgerDetail();
+  if(document.getElementById('tab-register').style.display!=='none') renderRegister(); if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab();
+});
+document.getElementById('entryDate').value = new Date().toISOString().slice(0,10);
+
+let modalCustId = null, modalMonthKey = null, upiQrInstance = null, modalBaseGrandTotal = 0;
+let currentPdfFile = null;
+
+function applyManualAdjustment(){
+  const adjEl = document.getElementById('modalManualAdjust'); const noteEl = document.getElementById('modalManualAdjustNote');
+  const adj = adjEl ? num(adjEl.value) : 0; const row = document.getElementById('pv_adjustRow');
+  if(adj){
+    row.style.display = 'flex'; const sign = adj>0 ? '+' : '−'; document.getElementById('pv_adjustAmt').textContent = sign + Math.abs(adj).toFixed(0);
+    const noteTxt = (noteEl && noteEl.value.trim()) ? noteEl.value.trim() : (adj>0 ? 'थकबाकी' : 'आगाऊ भरणा'); document.getElementById('pv_adjustNoteLbl').textContent = noteTxt;
+  } else { row.style.display = 'none'; }
+  const finalTotal = modalBaseGrandTotal + adj; document.getElementById('pv_grandTotal').textContent = finalTotal.toFixed(0); return finalTotal;
+}
+document.getElementById('modalManualAdjust').addEventListener('input', ()=>{
+  const finalTotal = applyManualAdjustment(); updateUpiQr(finalTotal, customers.find(x=>x.id===modalCustId)); regeneratePdfBackground();
+});
+document.getElementById('modalManualAdjustNote').addEventListener('input', ()=>{ applyManualAdjustment(); regeneratePdfBackground(); });
+
+function computeMonthAmount(custId, monthKey){
+  const c = customers.find(x=>x.id===custId); if(!c) return {milkAmount:0, otherTotal:0, prevBal:0, grandTotal:0};
+  const nDays = new Date(parseInt(monthKey.slice(0,4)), parseInt(monthKey.slice(5,7)), 0).getDate(); const custRecords = (records[monthKey] && records[monthKey][custId]) || {};
+  let milkAmount = 0, totQty = 0;
+  (c.products||[]).forEach(p=>{
+    const rowData = custRecords[p.type] || {}; let lineQty = 0; for(let d=1; d<=nDays; d++) lineQty += num(rowData[d]);
+    totQty += lineQty; milkAmount += lineQty * (p.rate||0);
+  });
+  const monthStart = `${monthKey}-01`; const monthEnd = `${monthKey}-${String(nDays).padStart(2,'0')}`; const ledger = c.ledger || [];
+  let otherTotal = 0; ledger.filter(e=> e.date>=monthStart && e.date<=monthEnd && e.type==='debit').forEach(e=> otherTotal += num(e.amount));
+  let prevBal = 0; ledger.filter(e=> e.date < monthStart).forEach(e=> prevBal += (e.type==='debit'?num(e.amount):-num(e.amount)));
+  const grandTotal = milkAmount + otherTotal + (prevBal>0?prevBal:0);
+  return {totQty, milkAmount, otherTotal, prevBal, grandTotal};
+}
+
+function populateBillFor(custId, monthKey){
+  const c = customers.find(x=>x.id===custId); if(!c) return null;
+  const nDays = new Date(parseInt(monthKey.slice(0,4)), parseInt(monthKey.slice(5,7)), 0).getDate(); const custRecords = (records[monthKey] && records[monthKey][custId]) || {};
+
+  document.getElementById('pv_shopName').textContent = settings.shopName || 'डेअरी ट्रिट';
+  document.getElementById('pv_shopAddr').textContent = settings.shopAddr + ' — संपर्क: ' + settings.shopPhone;
+  document.getElementById('pv_owner').textContent = settings.ownerName;
+  document.getElementById('pv_phonePay').textContent = settings.phonePay;
+  document.getElementById('pv_callingNo').textContent = settings.callingNo;
+
+  document.getElementById('pv_billNo').textContent = c.seq || '—'; document.getElementById('pv_custName').textContent = c.name; document.getElementById('pv_custPhone').textContent = c.phone || '—';
+  const y = monthKey.slice(0,4), m = parseInt(monthKey.slice(5,7))-1; document.getElementById('pv_month').textContent = monthNames[m] + ' ' + y;
+
+  const half = Math.ceil(nDays/2); const prods = c.products || []; const nProd = prods.length;
+  const prodData = prods.map(p=>({ p, label: typeLabel(p.type, p.otherLabel), rowData: custRecords[p.type] || {}, lineQty:0 }));
+
+  const monthStartForItems = `${monthKey}-01`; const monthEndForItems = `${monthKey}-${String(nDays).padStart(2,'0')}`; const otherByDay = {};
+  (c.ledger||[]).filter(e=> e.type==='debit' && e.date>=monthStartForItems && e.date<=monthEndForItems).forEach(e=>{ const day = parseInt(e.date.slice(8,10)); (otherByDay[day] = otherByDay[day] || []).push(e); });
+  function qtyCellHtml(pd, pdIndex, day){
+    const v = pd.rowData[day] || ''; pd.lineQty += num(v); const items = pdIndex===0 ? otherByDay[day] : null;
+    if(items && items.length){ const txt = items.map(it=> `${it.note||'वस्तू'} ₹${num(it.amount).toFixed(0)}`).join(', '); return `<td class="qty">${v}<span class="otherTag">(${txt})</span></td>`; }
+    return `<td class="qty">${v}</td>`;
+  }
+
+  let milkAmount = 0, totQty = 0, allTablesHtml = '';
+  if(nProd>0){
+    let bodyHtml = '';
+    for(let d=1; d<=half; d++){
+      let leftCells = `<td class="dnum">${d}</td>`; prodData.forEach((pd,idx)=>{ leftCells += qtyCellHtml(pd, idx, d); });
+      const rightD = d+half; let rightCells;
+      if(rightD<=nDays){ rightCells = `<td class="dnum">${rightD}</td>`; prodData.forEach((pd,idx)=>{ rightCells += qtyCellHtml(pd, idx, rightD); }); }
+      else { rightCells = '<td></td>' + '<td></td>'.repeat(nProd); }
+      bodyHtml += `<tr>${leftCells}${rightCells}</tr>`;
+    }
+    prodData.forEach(pd=>{ pd.lineAmt = pd.lineQty*(pd.p.rate||0); milkAmount += pd.lineAmt; totQty += pd.lineQty; });
+
+    const dateColW = nProd>=3 ? 9 : 11; const qtyColW = (100 - dateColW*2) / (nProd*2);
+    const headCells = prodData.map(pd=>`<th style="width:${qtyColW}%">${pd.label}<br><span style="font-weight:400;font-size:9.5px;">₹${pd.p.rate}/लि.</span></th>`).join('');
+    const theadRow = `<th style="width:${dateColW}%">दिनांक</th>${headCells}`;
+    const subtotalLine = prodData.map(pd=>`${pd.label}: ${pd.lineQty.toFixed(2)} लि. × ₹${pd.p.rate} = ₹${pd.lineAmt.toFixed(0)}`).join(' &nbsp;+&nbsp; ') + (nProd>1 ? ` &nbsp;=&nbsp; ₹${milkAmount.toFixed(0)}` : '');
+
+    allTablesHtml = `
+      <div class="prodBillBlock">
+        <table class="billTable"><thead><tr>${theadRow}${theadRow}</tr></thead><tbody>${bodyHtml}</tbody></table>
+        <div class="prodSubtotal" style="font-size:11px; text-align:right; padding-top:4px;">${subtotalLine}</div>
+      </div>`;
+  }
+  document.getElementById('pv_productTables').innerHTML = allTablesHtml;
+  document.getElementById('pv_totalQty').textContent = totQty.toFixed(2); document.getElementById('pv_milkAmount').textContent = milkAmount.toFixed(0);
+
+  const monthStart = `${monthKey}-01`; const monthEnd = `${monthKey}-${String(nDays).padStart(2,'0')}`; const ledger = c.ledger || [];
+  let otherTotal = 0; ledger.filter(e=> e.date>=monthStart && e.date<=monthEnd && e.type==='debit').forEach(e=> otherTotal += num(e.amount));
+  let prevBal = 0; ledger.filter(e=> e.date < monthStart).forEach(e=> prevBal += (e.type==='debit'?num(e.amount):-num(e.amount)));
+
+  const modalOtherEl = document.getElementById('modalOtherTotal'); const modalPrevEl = document.getElementById('modalPrevBal');
+  if(modalOtherEl) modalOtherEl.value = otherTotal.toFixed(0); if(modalPrevEl) modalPrevEl.value = prevBal.toFixed(0);
+
+  const otherRow = document.getElementById('pv_otherRow'); if(otherTotal>0){ otherRow.style.display='flex'; document.getElementById('pv_otherAmt').textContent = otherTotal.toFixed(0); } else otherRow.style.display='none';
+  const prevRow = document.getElementById('pv_prevRow'); if(prevBal>0){ prevRow.style.display='flex'; document.getElementById('pv_prevAmt').textContent = prevBal.toFixed(0); } else prevRow.style.display='none';
+
+  const grandTotal = milkAmount + otherTotal + (prevBal>0?prevBal:0); modalBaseGrandTotal = grandTotal;
+  const finalTotal = applyManualAdjustment(); updateUpiQr(finalTotal, c);
+  return finalTotal;
+}
+
+let backgroundPdfTimer = null;
+function regeneratePdfBackground() {
+  clearTimeout(backgroundPdfTimer);
+  const shareBtn = document.getElementById('shareBtn');
+  shareBtn.textContent = 'लोड होत आहे...'; shareBtn.disabled = true; currentPdfFile = null;
+  backgroundPdfTimer = setTimeout(async () => {
+    try {
+      const blob = await generatePdfBlob();
+      currentPdfFile = new File([blob], billFileName(), { type: 'application/pdf' });
+      shareBtn.textContent = '📤 PDF शेअर करा'; shareBtn.disabled = false;
+    } catch(e) { shareBtn.textContent = 'एरर'; }
+  }, 500);
+}
+
+function openBillModal(custId, monthKey){
+  modalCustId = custId; modalMonthKey = monthKey;
+  document.getElementById('modalManualAdjust').value = ''; document.getElementById('modalManualAdjustNote').value = '';
+  const grandTotal = populateBillFor(custId, monthKey); if(grandTotal===null) return;
+  document.getElementById('billModalOverlay').style.display = 'flex';
+  regeneratePdfBackground();
+}
+document.getElementById('closeModalBtn').addEventListener('click', ()=>{ document.getElementById('billModalOverlay').style.display='none'; setTimeout(maybeApplyPendingSnapshot, 300); });
+document.getElementById('billModalOverlay').addEventListener('click', e=>{ if(e.target.id==='billModalOverlay'){ document.getElementById('billModalOverlay').style.display='none'; setTimeout(maybeApplyPendingSnapshot, 300); } });
+
+function updateUpiQr(amount, customer){
+  const vpa = (settings.upiVpa||'').trim(); const payeeName = (settings.upiPayeeName||'Dairy Treat').trim(); const box = document.getElementById('upiQrBox');
+  if(!vpa){ box.innerHTML=''; return; }
+  let url = `upi://pay?pa=${encodeURIComponent(vpa)}&pn=${encodeURIComponent(payeeName)}&cu=INR`;
+  if(amount>0) url += `&am=${amount.toFixed(2)}`;
+  url += `&tn=${encodeURIComponent('Dairy Bill - '+(customer?customer.name:'')+' - '+document.getElementById('pv_month').textContent)}`;
+  box.innerHTML=''; upiQrInstance = new QRCode(box, { text:url, width:150, height:150, correctLevel:QRCode.CorrectLevel.M });
+}
+
+function billFileName(){ const c = customers.find(x=>x.id===modalCustId); return `बिल_${c?c.name:'ग्राहक'}_${modalMonthKey}.pdf`; }
+async function generatePdfBlob(){
+  const billEl = document.getElementById('bill'); const canvas = await html2canvas(billEl, {scale:2.5, backgroundColor:'#fffcf5'});
+  const imgData = canvas.toDataURL('image/jpeg', 0.92); const { jsPDF } = window.jspdf;
+  const pageWidthMm = 139.7, pageHeightMm = 215.9, marginMm = 6;
+  const maxWmm = pageWidthMm - marginMm*2; const maxHmm = pageHeightMm - marginMm*2;
+  let imgWmm = maxWmm; let imgHmm = canvas.height * imgWmm / canvas.width;
+  if(imgHmm > maxHmm){ imgHmm = maxHmm; imgWmm = canvas.width * imgHmm / canvas.height; }
+  const x = (pageWidthMm - imgWmm)/2; const y = (pageHeightMm - imgHmm)/2;
+  const pdf = new jsPDF({ orientation:'p', unit:'mm', format:[pageWidthMm, pageHeightMm], compress:true });
+  pdf.addImage(imgData,'JPEG',x,y,imgWmm,imgHmm); return pdf.output('blob');
+}
+
+// WhatsApp Direct Feature
+document.getElementById('whatsappBtn').addEventListener('click', ()=>{
+  const c = customers.find(x=>x.id===modalCustId);
+  if(!c) return;
+  let phone = c.phone || '';
+  phone = phone.replace(/\D/g,'');
+  if(!phone) { alert('या ग्राहकाचा मोबाईल नंबर अ‍ॅपमध्ये सेव्ह केलेला नाही!'); return; }
+  if(phone.length === 10) phone = '91' + phone;
+
+  const monthStr = document.getElementById('pv_month').textContent;
+  const grandTotal = document.getElementById('pv_grandTotal').textContent;
+  const sName = settings.shopName || 'डेअरी ट्रिट';
+
+  const msg = `नमस्कार *${c.name}*,\n\n*${sName}* कडून तुमचे *${monthStr}* महिन्याचे दुधाचे बिल खालीलप्रमाणे:\n\n*एकूण देय रक्कम: ₹ ${grandTotal}*\n\nकृपया वरील रक्कम जमा करावी.\nधन्यवाद! 🐄`;
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+});
+
+document.getElementById('shareBtn').addEventListener('click', async ()=>{
+  if(!currentPdfFile) { alert('कृपया थोडा वेळ थांबा, PDF तयार होत आहे...'); return; }
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [currentPdfFile] })) {
+      await navigator.share({ files: [currentPdfFile], title: billFileName(), text: 'तुमचे डेअरी बिल सोबत जोडले आहे.' });
+    } else {
+      alert('तुमचा फोन किंवा ब्राउझर थेट PDF शेअर सपोर्ट करत नाही. फाईल डाउनलोड केली जात आहे.');
+      const url = URL.createObjectURL(currentPdfFile); const a = document.createElement('a');
+      a.href = url; a.download = currentPdfFile.name; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    }
+  } catch(err) { if(err.name !== 'AbortError') alert(err.message); }
+});
+
+document.getElementById('pdfBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('pdfBtn'); btn.textContent='तयार करत आहे...'; btn.disabled=true;
+  try{
+    const blob = currentPdfFile ? currentPdfFile : await generatePdfBlob();
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=billFileName();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>{ window.open(url,'_blank'); URL.revokeObjectURL(url); }, 400);
+  }catch(err){ alert('PDF तयार करताना अडचण आली: '+err.message); }
+  btn.textContent='📄 PDF डाउनलोड'; btn.disabled=false;
+});
+
+document.getElementById('markPaidBtn').addEventListener('click', ()=>{
+  const c = customers.find(x=>x.id===modalCustId); if(!c) return;
+  const grandTotal = num(document.getElementById('pv_grandTotal').textContent); if(!grandTotal){ alert('रक्कम शून्य आहे.'); return; }
+  if(!c.ledger) c.ledger=[]; const adj = num(document.getElementById('modalManualAdjust').value);
+  const adjNote = adj ? ` (समायोजन ${adj>0?'+':''}${adj.toFixed(0)}${document.getElementById('modalManualAdjustNote').value.trim() ? ' — '+document.getElementById('modalManualAdjustNote').value.trim() : ''})` : '';
+  c.ledger.push({ id:genId('e'), date:new Date().toISOString().slice(0,10), type:'credit', note:'बिल पेमेंट - '+document.getElementById('pv_month').textContent+adjNote+' ['+modalMonthKey+']', amount:grandTotal, time:nowTimeStr(), ts:Date.now() });
+  saveCustomerDoc(c.id); renderRegister(); if(document.getElementById('tab-payments').style.display!=='none') renderPaymentsTab();
+  alert('पेमेंट खातेवहीत नोंदवले गेले.');
+});
+
+async function generateAllBillsPdf(monthKey, onProgress){
+  const filteredCusts = getFilteredCustomers(); const sorted = [...filteredCusts].sort((a,b)=>(a.seq||0)-(b.seq||0));
+  if(sorted.length===0){ throw new Error('या मार्गासाठी एकही ग्राहक जोडलेला नाही.'); }
+  const overlay = document.getElementById('billModalOverlay'); const prevDisplay = overlay.style.display, prevOpacity = overlay.style.opacity, prevPE = overlay.style.pointerEvents;
+  overlay.style.display = 'flex'; overlay.style.opacity = '0'; overlay.style.pointerEvents = 'none';
+  document.getElementById('modalManualAdjust').value = ''; document.getElementById('modalManualAdjustNote').value = '';
+  const { jsPDF } = window.jspdf; const pageWidthMm = 297, pageHeightMm = 210, marginMm = 6, gapMm = 4; const cellHeightMm = pageHeightMm - marginMm*2; const cellWidthMm = (pageWidthMm - marginMm*2 - gapMm) / 2;
+  const pdf = new jsPDF({ orientation:'l', unit:'mm', format:[pageWidthMm, pageHeightMm], compress:true });
+  try{
+    for(let i=0; i<sorted.length; i++){
+      const c = sorted[i]; populateBillFor(c.id, monthKey); await new Promise(res=> setTimeout(res, 60));
+      const billEl = document.getElementById('bill'); const canvas = await html2canvas(billEl, {scale:2, backgroundColor:'#fffcf5'}); const imgData = canvas.toDataURL('image/jpeg', 0.88);
+      let imgWmm = cellWidthMm; let imgHmm = canvas.height * imgWmm / canvas.width;
+      if(imgHmm > cellHeightMm){ imgHmm = cellHeightMm; imgWmm = canvas.width * imgHmm / canvas.height; }
+      const posInPage = i % 2; if(i>0 && posInPage===0) pdf.addPage();
+      const x = marginMm + posInPage*(cellWidthMm+gapMm) + (cellWidthMm - imgWmm)/2; const y = marginMm + (cellHeightMm - imgHmm)/2;
+      pdf.addImage(imgData, 'JPEG', x, y, imgWmm, imgHmm); if(onProgress) onProgress(i+1, sorted.length);
+    }
+  } finally { overlay.style.display = prevDisplay; overlay.style.opacity = prevOpacity; overlay.style.pointerEvents = prevPE; }
+  return pdf.output('blob');
+}
+
+document.getElementById('allBillsPdfBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('allBillsPdfBtn'); const monthKey = currentMonthKey(); const origLabel = btn.textContent; btn.disabled = true;
+  try{
+    const blob = await generateAllBillsPdf(monthKey, (done,total)=>{ btn.textContent = `तयार करत आहे... (${done}/${total})`; });
+    const y = monthKey.slice(0,4), m = parseInt(monthKey.slice(5,7))-1; const rFilter = document.getElementById('globalRouteFilter').value;
+    const routeName = rFilter === 'all' ? 'सर्व' : (rFilter === 'sai_nagar' ? 'साई_नगर' : (rFilter === 'gopal_nagar' ? 'गोपाळ_नगर' : 'प्रसाद_नगर'));
+    const fname = `${routeName}_बिले_${monthNames[m]}_${y}.pdf`;
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(()=>{ window.open(url,'_blank'); URL.revokeObjectURL(url); }, 400);
+  }catch(err){ alert('सर्व बिले तयार करताना अडचण आली: '+err.message); }
+  btn.textContent = origLabel; btn.disabled = false;
+});
+
+renderRegister(); renderCustomersTab(); renderLedgerCustSelect(); setSyncStatus('🔄 डेटाबेसशी जोडत आहे...', '#fef08a');
+subscribeMonthRecords(currentMonthKey());
+</script>
+</body>
+</html>
